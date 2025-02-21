@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
+import { useQueryClient } from 'react-query';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Get initial session
@@ -13,14 +14,6 @@ export function useAuth() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
-        if (session?.user) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          setUserRole(data?.role ?? null);
-        }
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {
@@ -33,16 +26,6 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        setUserRole(data?.role ?? null);
-      } else {
-        setUserRole(null);
-      }
     });
 
     return () => {
@@ -52,17 +35,18 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
-      setUserRole(null);
+      queryClient.clear();
     } catch (error) {
       console.error('Error signing out:', error);
+      throw error;
     }
   };
 
   return {
     user,
-    userRole,
     loading,
     signOut,
   };
