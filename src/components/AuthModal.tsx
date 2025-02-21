@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface AuthModalProps {
@@ -6,180 +6,111 @@ interface AuthModalProps {
   onClose: () => void;
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('staff');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  const createProfile = async (userId: string, userEmail: string, userRole: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: userEmail,
-          role: userRole,
-          username: userEmail.split('@')[0],
-        });
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error creating profile:', error);
-      throw error;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setError(null);
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
     try {
-      if (isLogin) {
-        // Handle Login
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) throw signInError;
-
-        // Get user role from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', signInData.user?.id)
-          .single();
-
-        if (profileError) throw profileError;
-        
-        localStorage.setItem('userRole', profileData.role);
-        onClose();
-      } else {
-        // Handle Sign Up
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
-            data: {
-              role: role
-            }
+            emailRedirectTo: window.location.origin
           }
         });
 
-        if (signUpError) throw signUpError;
-
-        if (!signUpData.user?.id) {
-          throw new Error('No user ID returned from signup');
+        if (error) throw error;
+        if (data?.user) {
+          onClose();
         }
-
-        // Create profile
-        await createProfile(signUpData.user.id, email, role);
-        
-        // Auto sign in after signup
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
-          password,
+          password
         });
 
-        if (signInError) throw signInError;
-        
-        localStorage.setItem('userRole', role);
-        onClose();
+        if (error) throw error;
+        if (data?.user) {
+          onClose();
+        }
       }
-    } catch (error: any) {
-      console.error('Auth error:', error);
-      setError(error.message || 'An error occurred during authentication');
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError(err.message || 'An error occurred during authentication');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg w-96">
-        <h2 className="text-2xl font-bold mb-4">
-          {isLogin ? 'Login' : 'Sign Up'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-              disabled={loading}
-              minLength={6}
-            />
-          </div>
-
-          {!isLogin && (
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <h2 className="text-xl font-bold mb-4">{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                disabled={loading}
-              >
-                <option value="staff">Staff</option>
-                <option value="department_head">Department Head</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                name="email"
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
             </div>
-          )}
-
-          {error && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
-
-          <div className="flex flex-col space-y-2">
-            <button
-              type="submit"
-              className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed`}
-              disabled={loading}
-            >
-              {loading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
-            </button>
-            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                name="password"
+                required
+                minLength={6}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            {error && (
+              <div className="text-red-500 text-sm">{error}</div>
+            )}
+          </div>
+          <div className="mt-6 flex justify-between items-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-500 hover:text-blue-600"
-              disabled={loading}
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-indigo-600 hover:text-indigo-500"
             >
-              {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {isLoading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+              </button>
+            </div>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};

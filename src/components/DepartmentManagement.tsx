@@ -3,29 +3,48 @@ import { useDepartments, useCreateDepartment, useUpdateDepartment, Department } 
 import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
 
 export const DepartmentManagement = () => {
-  const { data: departments, isLoading } = useDepartments();
+  const { data: departments, isLoading, error: fetchError } = useDepartments();
   const createDepartment = useCreateDepartment();
   const updateDepartment = useUpdateDepartment();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCreateOrUpdate = async (formData: FormData) => {
-    const department = {
-      name: formData.get('name') as string,
-      description: formData.get('description') as string,
-    };
+    try {
+      setError(null);
+      const department = {
+        name: formData.get('name') as string,
+        description: (formData.get('description') as string) || undefined
+      };
 
-    if (selectedDepartment) {
-      await updateDepartment.mutateAsync({ id: selectedDepartment.id, ...department });
-    } else {
-      await createDepartment.mutateAsync(department);
+      if (selectedDepartment) {
+        await updateDepartment.mutateAsync({ id: selectedDepartment.id, ...department });
+      } else {
+        await createDepartment.mutateAsync(department);
+      }
+      setIsModalOpen(false);
+      setSelectedDepartment(null);
+    } catch (err: any) {
+      console.error('Error handling department:', err);
+      setError(err.message || 'An error occurred while saving the department');
     }
-    setIsModalOpen(false);
-    setSelectedDepartment(null);
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex items-center justify-center h-64 text-red-500">
+        Error loading departments. Please try again.
+      </div>
+    );
   }
 
   return (
@@ -33,7 +52,10 @@ export const DepartmentManagement = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-900">Department Management</h2>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setError(null);
+            setIsModalOpen(true);
+          }}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
         >
           <PlusCircle className="h-5 w-5 mr-2" />
@@ -66,6 +88,7 @@ export const DepartmentManagement = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
                     onClick={() => {
+                      setError(null);
                       setSelectedDepartment(department);
                       setIsModalOpen(true);
                     }}
@@ -113,6 +136,9 @@ export const DepartmentManagement = () => {
                     rows={3}
                   />
                 </div>
+                {error && (
+                  <div className="text-red-500 text-sm">{error}</div>
+                )}
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                 <button
@@ -120,6 +146,7 @@ export const DepartmentManagement = () => {
                   onClick={() => {
                     setIsModalOpen(false);
                     setSelectedDepartment(null);
+                    setError(null);
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
@@ -128,8 +155,9 @@ export const DepartmentManagement = () => {
                 <button
                   type="submit"
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  disabled={createDepartment.isPending || updateDepartment.isPending}
                 >
-                  {selectedDepartment ? 'Update' : 'Create'}
+                  {createDepartment.isPending || updateDepartment.isPending ? 'Saving...' : (selectedDepartment ? 'Update' : 'Create')}
                 </button>
               </div>
             </form>

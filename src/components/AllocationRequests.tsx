@@ -5,36 +5,73 @@ import { useResources } from '../hooks/useResources';
 import { PlusCircle, CheckCircle, XCircle } from 'lucide-react';
 
 export const AllocationRequests = () => {
-  const { data: requests, isLoading } = useAllocationRequests();
+  const { data: requests, isLoading, error } = useAllocationRequests();
   const { data: departments } = useDepartments();
   const { data: resources } = useResources();
   const createRequest = useCreateAllocationRequest();
   const updateRequest = useUpdateAllocationRequest();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleCreateRequest = async (formData: FormData) => {
-    const request = {
-      resource_id: formData.get('resource_id') as string,
-      requesting_department_id: formData.get('department_id') as string,
-      quantity: parseInt(formData.get('quantity') as string),
-      priority: formData.get('priority') as 'low' | 'medium' | 'high' | 'urgent',
-      status: 'pending' as const,
-    };
+    try {
+      setFormError(null);
+      const request = {
+        resource_id: formData.get('resource_id') as string,
+        requesting_department_id: formData.get('department_id') as string,
+        quantity: parseInt(formData.get('quantity') as string),
+        priority: formData.get('priority') as 'low' | 'medium' | 'high' | 'urgent',
+        status: 'pending' as const
+      };
 
-    await createRequest.mutateAsync(request);
-    setIsModalOpen(false);
+      // Validate form data
+      if (!request.resource_id) {
+        throw new Error('Please select a resource');
+      }
+      if (!request.requesting_department_id) {
+        throw new Error('Please select a department');
+      }
+      if (isNaN(request.quantity) || request.quantity <= 0) {
+        throw new Error('Please enter a valid quantity');
+      }
+      if (!request.priority) {
+        throw new Error('Please select a priority');
+      }
+
+      await createRequest.mutateAsync(request);
+      setIsModalOpen(false);
+    } catch (err: any) {
+      console.error('Error creating request:', err);
+      setFormError(err.message || 'An error occurred while creating the request');
+    }
   };
 
   const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
-    await updateRequest.mutateAsync({
-      id,
-      status,
-      approval_date: status === 'approved' ? new Date().toISOString() : undefined,
-    });
+    try {
+      await updateRequest.mutateAsync({
+        id,
+        status,
+        approval_date: status === 'approved' ? new Date().toISOString() : undefined,
+      });
+    } catch (err: any) {
+      console.error('Error updating request:', err);
+    }
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64 text-red-500">
+        Error loading requests. Please try again.
+      </div>
+    );
   }
 
   return (
@@ -42,7 +79,10 @@ export const AllocationRequests = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-900">Resource Allocation Requests</h2>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setFormError(null);
+            setIsModalOpen(true);
+          }}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
         >
           <PlusCircle className="h-5 w-5 mr-2" />
@@ -50,6 +90,7 @@ export const AllocationRequests = () => {
         </button>
       </div>
 
+      {/* Requests Table */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -66,18 +107,20 @@ export const AllocationRequests = () => {
             {requests?.map((request) => (
               <tr key={request.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{request.resource?.name}</div>
+                  <div className="text-sm text-gray-900">{request.resource?.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{request.department?.name}</div>
+                  <div className="text-sm text-gray-900">{request.requesting_department?.name}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{request.quantity}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{request.quantity}</div>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                     ${request.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                       request.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                        request.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'}`}>
+                      request.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'}`}>
                     {request.priority}
                   </span>
                 </td>
@@ -85,13 +128,13 @@ export const AllocationRequests = () => {
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                     ${request.status === 'approved' ? 'bg-green-100 text-green-800' :
                       request.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'}`}>
+                      'bg-yellow-100 text-yellow-800'}`}>
                     {request.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                   {request.status === 'pending' && (
-                    <div className="flex space-x-2">
+                    <>
                       <button
                         onClick={() => handleUpdateStatus(request.id, 'approved')}
                         className="text-green-600 hover:text-green-900"
@@ -104,7 +147,7 @@ export const AllocationRequests = () => {
                       >
                         <XCircle className="h-5 w-5" />
                       </button>
-                    </div>
+                    </>
                   )}
                 </td>
               </tr>
@@ -113,10 +156,11 @@ export const AllocationRequests = () => {
         </table>
       </div>
 
+      {/* Create Request Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">New Allocation Request</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Create Allocation Request</h3>
             <form onSubmit={(e) => {
               e.preventDefault();
               handleCreateRequest(new FormData(e.currentTarget));
@@ -126,8 +170,8 @@ export const AllocationRequests = () => {
                   <label className="block text-sm font-medium text-gray-700">Resource</label>
                   <select
                     name="resource_id"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   >
                     <option value="">Select a resource</option>
                     {resources?.map((resource) => (
@@ -139,8 +183,8 @@ export const AllocationRequests = () => {
                   <label className="block text-sm font-medium text-gray-700">Department</label>
                   <select
                     name="department_id"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   >
                     <option value="">Select a department</option>
                     {departments?.map((department) => (
@@ -154,37 +198,45 @@ export const AllocationRequests = () => {
                     type="number"
                     name="quantity"
                     min="1"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Priority</label>
                   <select
                     name="priority"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   >
+                    <option value="">Select priority</option>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                     <option value="urgent">Urgent</option>
                   </select>
                 </div>
+                {formError && (
+                  <div className="text-red-500 text-sm">{formError}</div>
+                )}
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setFormError(null);
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  disabled={createRequest.isPending}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  Create Request
+                  {createRequest.isPending ? 'Creating...' : 'Create Request'}
                 </button>
               </div>
             </form>
