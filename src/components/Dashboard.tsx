@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Activity, PieChart, Calendar, Bell, Building2, Users2, BoxesIcon, BarChart3, ArrowRightCircle, LogOut } from 'lucide-react';
+import { Activity, PieChart, Calendar, Bell, Building2, BoxesIcon, BarChart3, ArrowRightCircle, LogOut, Menu, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ResourceManagement } from './ResourceManagement';
 import { DepartmentManagement } from './DepartmentManagement';
 import { AllocationRequests } from './AllocationRequests';
 import { TransferRequests } from './TransferRequests';
 import { Analytics } from './Analytics';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const queryClient = new QueryClient();
 
@@ -15,12 +16,16 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userRole, onSignOut }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('resources');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   // Define available tabs based on user role
   const getTabs = () => {
     const tabs = [
-      { id: 'overview', text: 'Overview', icon: Activity, roles: ['admin', 'department_head', 'staff'] },
       { id: 'resources', text: 'Resources', icon: BoxesIcon, roles: ['admin', 'department_head', 'staff'] },
       { id: 'requests', text: 'Requests', icon: Calendar, roles: ['admin', 'department_head', 'staff'] },
     ];
@@ -31,10 +36,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onSignOut }) => {
         { id: 'transfers', text: 'Transfers', icon: ArrowRightCircle, roles: ['admin', 'department_head'] },
         { id: 'analytics', text: 'Analytics', icon: BarChart3, roles: ['admin', 'department_head'] }
       );
-    }
-
-    if (userRole === 'admin') {
-      tabs.push({ id: 'users', text: 'Users', icon: Users2, roles: ['admin'] });
     }
 
     return tabs;
@@ -80,62 +81,167 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onSignOut }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex h-screen bg-gray-100">
-        {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm">
-          <div className="p-4">
-            <div className="flex items-center space-x-2 mb-8">
-              <Building2 className="h-8 w-8 text-indigo-600" />
-              <span className="text-xl font-bold text-gray-900">ResourceFlow</span>
+      <div className="min-h-screen bg-gray-50">
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden fixed top-0 left-0 m-4 z-50">
+          <button
+            onClick={toggleMobileMenu}
+            className="p-2 rounded-lg bg-white shadow-lg text-gray-600 hover:text-gray-900"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* Sidebar - Desktop */}
+        <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
+          <div className="flex flex-col flex-grow bg-white shadow-lg">
+            {/* Logo */}
+            <div className="p-6">
+              <h1 className="text-2xl font-bold text-gray-900">ResourceFlow</h1>
             </div>
-            <nav className="space-y-2">
+
+            {/* Navigation */}
+            <nav className="flex-1 p-4 space-y-1">
               {getTabs().map((tab) => (
-                <SidebarItem
+                <button
                   key={tab.id}
-                  icon={<tab.icon className="h-5 w-5" />}
-                  text={tab.text}
-                  active={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                />
+                  className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-xl ${
+                    activeTab === tab.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <tab.icon className="w-5 h-5 mr-3" />
+                  {tab.text}
+                </button>
               ))}
               <button
                 onClick={onSignOut}
-                className="flex items-center space-x-2 w-full px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-100"
               >
-                <LogOut className="h-5 w-5" />
-                <span>Sign Out</span>
+                <LogOut className="w-5 h-5 mr-3" />
+                Sign Out
               </button>
             </nav>
-          </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <header className="bg-white shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-gray-900">
-                  {getTabs().find(tab => tab.id === activeTab)?.text || 'Overview'}
-                </h1>
-                <div className="flex items-center space-x-4">
-                  <button className="text-gray-600 hover:text-gray-900">
-                    <Bell className="h-6 w-6" />
-                  </button>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white">
-                      {userRole?.[0].toUpperCase()}
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      {userRole?.replace('_', ' ')}
+            {/* User Profile */}
+            <div className="p-4 border-t">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">
+                      {userRole?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900">{userRole?.replace('_', ' ')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu - Slide Over */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 lg:hidden"
+                onClick={toggleMobileMenu}
+              />
+
+              {/* Slide-over menu */}
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'tween', duration: 0.3 }}
+                className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-50 lg:hidden"
+              >
+                <div className="flex flex-col h-full">
+                  {/* Logo */}
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold text-gray-900">ResourceFlow</h1>
+                  </div>
+
+                  {/* Navigation */}
+                  <nav className="flex-1 p-4 space-y-1">
+                    {getTabs().map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-xl ${
+                          activeTab === tab.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <tab.icon className="w-5 h-5 mr-3" />
+                        {tab.text}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        onSignOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-100"
+                    >
+                      <LogOut className="w-5 h-5 mr-3" />
+                      Sign Out
+                    </button>
+                  </nav>
+
+                  {/* User Profile */}
+                  <div className="p-4 border-t">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {userRole?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">{userRole?.replace('_', ' ')}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <div className="lg:pl-64">
+          <header className="bg-white shadow-sm">
+            <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {getTabs().find(tab => tab.id === activeTab)?.text || 'Resources'}
+              </h2>
+              <div className="flex items-center space-x-4">
+                <button className="text-gray-400 hover:text-gray-500">
+                  <Bell className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </header>
 
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {renderContent()}
+          <main className="p-4 sm:p-6 lg:p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderContent()}
+            </motion.div>
           </main>
         </div>
       </div>

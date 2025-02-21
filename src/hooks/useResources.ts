@@ -7,7 +7,6 @@ export interface Resource {
   description?: string;
   quantity: number;
   status: 'available' | 'in_use' | 'maintenance';
-  location?: string;
   department_id?: string;
   created_by?: string;
   created_at: string;
@@ -34,30 +33,43 @@ export const useCreateResource = () => {
 
   return useMutation({
     mutationFn: async (resource: Partial<Omit<Resource, 'id' | 'created_at' | 'updated_at'>>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        // Validate required fields
+        if (!resource.name) {
+          throw new Error('Resource name is required');
+        }
+
+        const newResource = {
+          name: resource.name.trim(),
+          description: resource.description?.trim(),
+          status: resource.status || 'available',
+          quantity: resource.quantity || 1,
+          created_by: user.id,
+          department_id: resource.department_id || null
+        };
+
+        const { data, error } = await supabase
+          .from('resources')
+          .insert(newResource)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating resource:', error);
+          throw new Error(error.message);
+        }
+        
+        return data;
+      } catch (error: any) {
+        console.error('Error in createResource:', error);
+        throw new Error(error.message || 'Failed to create resource');
       }
-
-      const newResource = {
-        ...resource,
-        created_by: user.id,
-        status: resource.status || 'available',
-        quantity: resource.quantity || 0
-      };
-
-      const { data, error } = await supabase
-        .from('resources')
-        .insert(newResource)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating resource:', error);
-        throw error;
-      }
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resources'] });
