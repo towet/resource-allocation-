@@ -9,7 +9,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthClick }) => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white/80 backdrop-blur-sm fixed w-full z-50 shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Building2 className="h-8 w-8 text-indigo-600" />
@@ -24,7 +24,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthClick }) => {
             </button>
             <button
               onClick={onAuthClick}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-all duration-200 hover:shadow-lg"
             >
               Get Started
             </button>
@@ -33,46 +33,72 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthClick }) => {
       </header>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-            <span className="block">Streamline Your Resource</span>
-            <span className="block text-indigo-600">Management Process</span>
-          </h1>
-          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            Efficiently manage and allocate resources across departments. Track requests, monitor usage, and make data-driven decisions.
-          </p>
-          <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-            <div className="rounded-md shadow">
-              <button
-                onClick={onAuthClick}
-                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
-              >
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </button>
+      <div className="relative pt-16 bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            {/* Left Column - Content */}
+            <div className="order-2 lg:order-1">
+              <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl lg:text-6xl">
+                <span className="block mb-2">Streamline Your</span>
+                <span className="block text-indigo-600">Resource Management</span>
+              </h1>
+              <p className="mt-6 text-lg sm:text-xl text-gray-600">
+                Efficiently manage and allocate resources across departments. Track requests, monitor usage, and make data-driven decisions.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={onAuthClick}
+                  className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-lg font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-200 hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column - Image */}
+            <div className="order-1 lg:order-2 relative">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-all duration-500">
+                <img
+                  src="https://cdn.leonardo.ai/users/b6aa1b0f-1900-4a85-897d-d81532027875/generations/156a38d7-5bfe-465d-987c-e1072df98233/Leonardo_Phoenix_09_Create_a_sophisticated_highcontrast_visual_0.jpg"
+                  alt="Resource Management"
+                  className="w-full h-[400px] lg:h-[500px] object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-transparent mix-blend-overlay"></div>
+              </div>
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-indigo-100 rounded-full opacity-50 blur-2xl"></div>
+              <div className="absolute -top-6 -right-6 w-32 h-32 bg-blue-100 rounded-full opacity-50 blur-2xl"></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Features */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+            Powerful Features for Resource Management
+          </h2>
+          <p className="mt-4 text-lg text-gray-600">
+            Everything you need to manage your resources effectively
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <FeatureCard
             icon={<BoxesIcon className="h-8 w-8 text-indigo-600" />}
             title="Resource Management"
-            description="Track and manage resources efficiently across departments"
+            description="Track and manage resources efficiently across departments with real-time updates and detailed tracking"
           />
           <FeatureCard
             icon={<Users2 className="h-8 w-8 text-indigo-600" />}
             title="Role-Based Access"
-            description="Secure access control with different permission levels"
+            description="Secure access control with customizable permission levels for different user roles"
           />
           <FeatureCard
             icon={<BarChart3 className="h-8 w-8 text-indigo-600" />}
             title="Analytics & Insights"
-            description="Make data-driven decisions with detailed analytics"
+            description="Make data-driven decisions with comprehensive analytics and visual reporting tools"
           />
         </div>
       </div>
@@ -82,10 +108,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthClick }) => {
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) => {
   return (
-    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="mb-4">{icon}</div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-500">{description}</p>
+    <div className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 p-8 transition-all duration-300 hover:-translate-y-1">
+      <div className="relative">
+        <div className="inline-flex items-center justify-center p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors duration-200">
+          {icon}
+        </div>
+        <h3 className="mt-6 text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors duration-200">
+          {title}
+        </h3>
+        <p className="mt-4 text-gray-500 leading-relaxed">
+          {description}
+        </p>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-indigo-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-b-2xl"></div>
     </div>
   );
 };
