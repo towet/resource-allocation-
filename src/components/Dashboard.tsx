@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Activity, PieChart, Calendar, Bell, Building2, BoxesIcon, BarChart3, ArrowRightCircle, LogOut, Menu, X, Box, CheckCircle, Package, AlertCircle } from 'lucide-react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ResourceManagement } from './ResourceManagement';
 import { DepartmentManagement } from './DepartmentManagement';
 import { AllocationRequests } from './AllocationRequests';
@@ -8,8 +7,6 @@ import { TransferRequests } from './TransferRequests';
 import { Analytics } from './Analytics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-
-const queryClient = new QueryClient();
 
 export const Dashboard = () => {
   const { signOut } = useAuth();
@@ -76,137 +73,118 @@ export const Dashboard = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50">
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden fixed top-0 left-0 m-4 z-50">
-          <button
-            onClick={toggleMobileMenu}
-            className="p-2 rounded-lg bg-white shadow-lg text-gray-600 hover:text-gray-900"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Menu Button */}
+      <div className="lg:hidden fixed top-0 left-0 m-4 z-50">
+        <button
+          onClick={toggleMobileMenu}
+          className="p-2 rounded-lg bg-white shadow-lg text-gray-600 hover:text-gray-900"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
 
-        {/* Header */}
-        <div className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex">
-                <div className="flex-shrink-0 flex items-center">
-                  <h1 className="text-xl font-bold text-gray-900">ResourceFlow</h1>
-                </div>
+      {/* Header */}
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <h1 className="text-xl font-bold text-gray-900">ResourceFlow</h1>
               </div>
-              <div className="flex items-center">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleLogout}
-                  className="ml-4 inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </motion.button>
-              </div>
+            </div>
+            <div className="flex items-center">
+              <motion.button
+                onClick={handleLogout}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="ml-4 inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </motion.button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Sidebar - Desktop */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
-          <div className="flex flex-col flex-grow bg-white shadow-lg">
-            {/* Logo */}
-            <div className="p-6">
-              <h1 className="text-2xl font-bold text-gray-900">ResourceFlow</h1>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 space-y-1 px-4">
+      <div className="flex">
+        {/* Sidebar for desktop */}
+        <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:pt-16 lg:pb-4 lg:bg-gray-800">
+          <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+            <nav className="px-2 space-y-1">
               {tabs.map((tab) => (
                 <SidebarItem
                   key={tab.id}
-                  icon={<tab.icon className="h-5 w-5" />}
+                  icon={<tab.icon className="h-6 w-6" />}
                   text={tab.text}
                   active={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
                 />
               ))}
             </nav>
-
-            {/* Sign Out Button */}
-            <div className="p-4">
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-              >
-                <LogOut className="h-5 w-5 mr-3" />
-                Sign Out
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile menu */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
-              initial={{ x: '-100%' }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'tween' }}
-              className="fixed inset-0 z-40 lg:hidden"
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="fixed inset-0 flex z-40 lg:hidden"
             >
-              <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={toggleMobileMenu} />
-              <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
+              <motion.div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={toggleMobileMenu}>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.div>
+
+              <motion.div className="relative flex-1 flex flex-col max-w-xs w-full bg-gray-800">
                 <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-                  <div className="px-4">
-                    <h1 className="text-2xl font-bold text-gray-900">ResourceFlow</h1>
-                  </div>
                   <nav className="mt-5 px-2 space-y-1">
                     {tabs.map((tab) => (
                       <SidebarItem
                         key={tab.id}
-                        icon={<tab.icon className="h-5 w-5" />}
+                        icon={<tab.icon className="h-6 w-6" />}
                         text={tab.text}
                         active={activeTab === tab.id}
                         onClick={() => {
                           setActiveTab(tab.id);
-                          toggleMobileMenu();
+                          setIsMobileMenuOpen(false);
                         }}
                       />
                     ))}
                   </nav>
                 </div>
-                <div className="p-4">
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                  >
-                    <LogOut className="h-5 w-5 mr-3" />
-                    Sign Out
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Main Content */}
-        <div className="lg:pl-64">
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            {renderContent()}
+        {/* Main content */}
+        <div className="lg:pl-64 flex-1">
+          <main className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {renderContent()}
+            </div>
           </main>
         </div>
       </div>
-    </QueryClientProvider>
+    </div>
   );
 };
 
 const SidebarItem = ({ icon, text, active, onClick }: { icon: React.ReactNode; text: string; active: boolean; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`flex items-center w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-      active ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full ${
+      active ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'
     }`}
   >
     {icon}
@@ -215,17 +193,26 @@ const SidebarItem = ({ icon, text, active, onClick }: { icon: React.ReactNode; t
 );
 
 const StatCard = ({ title, value, change, icon }: { title: string; value: string; change: string; icon: React.ReactNode }) => (
-  <div className="bg-white rounded-xl shadow-sm p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
+  <div className="bg-white overflow-hidden shadow rounded-lg">
+    <div className="p-5">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <div className="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+            {icon}
+          </div>
+        </div>
+        <div className="ml-5 w-0 flex-1">
+          <dl>
+            <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+            <dd className="flex items-baseline">
+              <div className="text-2xl font-semibold text-gray-900">{value}</div>
+              <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                {change}
+              </div>
+            </dd>
+          </dl>
+        </div>
       </div>
-      <div className="bg-indigo-50 rounded-lg p-3">{icon}</div>
-    </div>
-    <div className="mt-4">
-      <span className="text-sm font-medium text-green-600">{change}</span>
-      <span className="text-sm font-medium text-gray-500"> vs last month</span>
     </div>
   </div>
 );
