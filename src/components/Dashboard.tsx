@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, PieChart, Calendar, Bell, Building2, BoxesIcon, BarChart3, ArrowRightCircle, LogOut, Menu, X } from 'lucide-react';
+import { Activity, PieChart, Calendar, Bell, Building2, BoxesIcon, BarChart3, ArrowRightCircle, LogOut, Menu, X, Box, CheckCircle, Package, AlertCircle } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ResourceManagement } from './ResourceManagement';
 import { DepartmentManagement } from './DepartmentManagement';

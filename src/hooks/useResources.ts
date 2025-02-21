@@ -7,8 +7,6 @@ export interface Resource {
   description?: string;
   quantity: number;
   status: 'available' | 'in_use' | 'maintenance';
-  department_id?: string;
-  created_by?: string;
   created_at: string;
   updated_at: string;
 }
@@ -34,12 +32,6 @@ export const useCreateResource = () => {
   return useMutation({
     mutationFn: async (resource: Partial<Omit<Resource, 'id' | 'created_at' | 'updated_at'>>) => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
-
         // Validate required fields
         if (!resource.name) {
           throw new Error('Resource name is required');
@@ -50,8 +42,6 @@ export const useCreateResource = () => {
           description: resource.description?.trim(),
           status: resource.status || 'available',
           quantity: resource.quantity || 1,
-          created_by: user.id,
-          department_id: resource.department_id || null
         };
 
         const { data, error } = await supabase
@@ -82,12 +72,6 @@ export const useUpdateResource = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...resource }: Partial<Resource> & { id: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
       const { data, error } = await supabase
         .from('resources')
         .update({
@@ -99,9 +83,9 @@ export const useUpdateResource = () => {
         .single();
 
       if (error) {
-        console.error('Error updating resource:', error);
         throw error;
       }
+
       return data;
     },
     onSuccess: () => {
