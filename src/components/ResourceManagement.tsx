@@ -86,7 +86,10 @@ export const ResourceManagement = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setSelectedResource(null);
+              setIsModalOpen(true);
+            }}
             className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
           >
             <PlusCircle className="h-5 w-5 mr-2" />
@@ -199,19 +202,15 @@ export const ResourceManagement = () => {
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th scope="col" className="hidden sm:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th scope="col" className="relative px-4 sm:px-6 py-3">
+                    <span className="sr-only">Edit</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {resources?.map((resource) => (
-                  <motion.tr
-                    key={resource.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                  >
+                  <tr key={resource.id} className="hover:bg-gray-50">
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{resource.name}</div>
                     </td>
@@ -220,22 +219,24 @@ export const ResourceManagement = () => {
                         {resource.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{resource.quantity}</td>
-                    <td className="hidden sm:table-cell px-4 sm:px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{resource.description || '-'}</td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {resource.quantity}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                      {resource.description || '-'}
+                    </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                      <button
                         onClick={() => {
                           setSelectedResource(resource);
                           setIsModalOpen(true);
                         }}
                         className="text-indigo-600 hover:text-indigo-900"
                       >
-                        <Edit2 className="h-4 w-4" />
-                      </motion.button>
+                        <Edit2 className="h-5 w-5" />
+                      </button>
                     </td>
-                  </motion.tr>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -243,104 +244,119 @@ export const ResourceManagement = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Create/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 overflow-y-auto z-50">
-            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              {/* Background overlay */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 transition-opacity"
-                aria-hidden="true"
-              >
-                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-              </motion.div>
+                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                onClick={() => setIsModalOpen(false)}
+              />
 
-              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+              {/* Modal panel */}
+              <div className="fixed inset-0 z-10 overflow-y-auto">
+                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+                  >
+                    <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                      <h3 className="text-2xl font-semibold leading-6 text-gray-900 mb-8">
+                        {selectedResource ? 'Edit Resource' : 'Add New Resource'}
+                      </h3>
 
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full"
-              >
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreateOrUpdate(new FormData(e.currentTarget));
-                }}>
-                  <div className="bg-white px-4 sm:px-6 pt-5 pb-4">
-                    <div className="space-y-4 sm:space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Name</label>
-                        <input
-                          type="text"
-                          name="name"
-                          defaultValue={selectedResource?.name}
-                          className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea
-                          name="description"
-                          defaultValue={selectedResource?.description}
-                          rows={3}
-                          className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Quantity</label>
-                        <input
-                          type="number"
-                          name="quantity"
-                          defaultValue={selectedResource?.quantity}
-                          min="0"
-                          className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
-                          name="status"
-                          defaultValue={selectedResource?.status || 'available'}
-                          className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        >
-                          <option value="available">Available</option>
-                          <option value="in_use">In Use</option>
-                          <option value="maintenance">Maintenance</option>
-                        </select>
-                      </div>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        handleCreateOrUpdate(new FormData(e.currentTarget));
+                      }}>
+                        <div className="space-y-6">
+                          <div>
+                            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                              Name
+                            </label>
+                            <input
+                              type="text"
+                              name="name"
+                              id="name"
+                              defaultValue={selectedResource?.name}
+                              required
+                              className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                              Description
+                            </label>
+                            <textarea
+                              name="description"
+                              id="description"
+                              defaultValue={selectedResource?.description}
+                              rows={3}
+                              className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              name="quantity"
+                              id="quantity"
+                              defaultValue={selectedResource?.quantity || 1}
+                              min={0}
+                              required
+                              className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                              Status
+                            </label>
+                            <select
+                              name="status"
+                              id="status"
+                              defaultValue={selectedResource?.status || 'available'}
+                              className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            >
+                              <option value="available">Available</option>
+                              <option value="in_use">In Use</option>
+                              <option value="maintenance">Maintenance</option>
+                            </select>
+                          </div>
+
+                          <div className="mt-8 flex justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setIsModalOpen(false)}
+                              className="inline-flex justify-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              className="inline-flex justify-center rounded-xl border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            >
+                              {selectedResource ? 'Save Changes' : 'Create Resource'}
+                            </button>
+                          </div>
+                        </div>
+                      </form>
                     </div>
-                  </div>
-                  <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row-reverse sm:gap-3">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="submit"
-                      className="w-full sm:w-auto inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-xl shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mb-2 sm:mb-0"
-                    >
-                      {selectedResource ? 'Update' : 'Create'} Resource
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="button"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setSelectedResource(null);
-                        setError(null);
-                      }}
-                      className="w-full sm:w-auto inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      Cancel
-                    </motion.button>
-                  </div>
-                </form>
-              </motion.div>
+                  </motion.div>
+                </div>
+              </div>
             </div>
           </div>
         )}
